@@ -1,0 +1,13 @@
+{
+  "name": "nikoletamakeup-site",
+  "private": true,
+  "version": "5.0.0",
+  "description": "nikoletamakeup.com — static multi-page build + Cloudflare Worker",
+  "scripts": {
+    "build": "node build.js",
+    "deploy": "node build.js && wrangler deploy"
+  },
+  "devDependencies": {
+    "cheerio": "^1.0.0"
+  }
+}

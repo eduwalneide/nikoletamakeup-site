@@ -2,7 +2,7 @@
   "name": "nikoleta-v5",
   "main": "worker.js",
   "compatibility_date": "2026-09-11",
-  "assets": { "directory": ".", "binding": "ASSETS" },
+  "assets": { "directory": "dist", "binding": "ASSETS", "not_found_handling": "404-page" },
   "kv_namespaces": [ { "binding": "IG_KV", "id": "3ac83e7b22a94d8288452da1731ee8fb" } ],
   "triggers": { "crons": ["0 4 1,15 * *"] },
   "vars": {

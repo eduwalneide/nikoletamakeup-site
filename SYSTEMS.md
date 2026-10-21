@@ -1,6 +1,6 @@
 # nikoletamakeup.com — how the three dynamic systems work
 
-The site is a static page (`index.html` + a few JS files + images). Three parts are "alive" and
+The site is a static multi-page build: `node build.js` turns `src/template.html`, the `src/i18n*.js` dictionaries and `src/testimonials.js` into `dist/` (7 pages × 9 languages, each with its own URL, title, description and hreflang). `dist/` is what gets hosted. Three parts are "alive" and
 need a small amount of care. All three are designed to **degrade gracefully**: if the server
 piece is missing, the page still works, just with a simpler behaviour.
 
@@ -8,7 +8,7 @@ piece is missing, the page still works, just with a simpler behaviour.
 |---|---|---|
 | 1. Contact form → email | `worker.js` route `POST /api/enquiry` | Yes, falls back to opening the visitor's email app |
 | 2. Instagram feed | `worker.js` route `GET /api/instagram` + `ig.json` | Yes, shows the saved snapshot in `ig.json` |
-| 3. Testimonials ("Kind words") | `testimonials.js` + `img/words/` | Yes, it is a plain data file |
+| 3. Testimonials ("Kind words") | `src/testimonials.js` + `dist/img/words/` | Yes, pre-rendered into the Reviews page at build time |
 
 The Worker is Cloudflare Workers. `wrangler.jsonc` is its config; `worker.js` is its code.
 If you host the site on Cloudflare Workers, systems 1 and 2 run at full power. If you host it
@@ -80,8 +80,7 @@ stores it in KV. Without a token, or if Instagram fails, the route returns the s
 
 ## 3. Testimonials ("Kind words")
 
-**What happens:** `testimonials.js` is a plain list; the page renders it newest-first, 12 cards at a
-time with a "Show more" button. No server involved.
+**What happens:** `src/testimonials.js` is a plain list; the build renders it newest-first into the Reviews page (12 visible, the rest behind "Show more"). No server involved.
 
 **Adding one:** insert an object at the **top** of `window.TESTIMONIALS`:
 ```js
@@ -91,8 +90,7 @@ time with a "Show more" button. No server involved.
   `card` handwritten card, `press` article. The label is translated automatically.
 - `who`: first name, handle or role ("Bride", "Mother of the bride"). No surnames, emails or phones.
 - `img` is optional. Photos go in `img/words/`, full image uncropped, max ~1400 px, JPEG quality ~84.
-- After editing, bump the version in `index.html` so browsers reload the file:
-  `<script src="testimonials.js?v=YYYYMMDD">`.
+- After editing, run `node build.js` (regenerates `dist/`), then deploy / upload `dist/`.
 
 **Weekly update from Instagram (current practice):** the source of new testimonials is the
 "TESTIMONIAL" highlight on @nikoletamakeup. The Instagram API does not expose highlights, so there is
@@ -106,12 +104,13 @@ adds a new story to the highlight.
 
 ## Everything else (texts, prices, photos)
 
-- **Texts and prices** live in the `i18n*.js` files, one line per language (EN, ES, CA, FR, DE,
-  IT, PT, LT, RU); `index.html` holds the English defaults. Edit both, then bump the `?v=` on the
-  changed script tag at the bottom of `index.html`.
-- **Portfolio carousels** are `<figure>` lists inside `.track` containers in `index.html`; images
-  live in `img/work/makeup/`, `img/work/hair/`, `img/work/ind/`. Add a figure, drop the image, done.
-- **Deploy** (Cloudflare): `npx wrangler deploy` from the project folder. Static hosting: upload the
-  files; `index.html` must be at the web root.
+- **Texts and prices** live in `src/i18n*.js`, one line per language (EN, ES, CA, FR, DE, IT, PT, LT, RU);
+  `src/template.html` holds the English defaults and the markup. Edit, run `node build.js`, deploy.
+- **Page titles, descriptions and URL slugs** per language are in `src/seo.js`.
+- **Portfolio carousels** are `<figure>` lists inside `.track` containers in `src/template.html`; images
+  live in `dist/img/work/makeup/`, `dist/img/work/hair/`, `dist/img/work/ind/`. Add a figure, drop the image, rebuild.
+- **Build & deploy:** `npm install` once, then `node build.js`. Cloudflare: `npx wrangler deploy` (serves `dist/`).
+  Static hosting: upload the contents of `dist/` to the web root (directory `index.html` files, so
+  `/es/servicios/` must resolve to `/es/servicios/index.html`; every normal host does this).
 
 Technical contact: Eduardo Walneide · eduwalneide@gmail.com
